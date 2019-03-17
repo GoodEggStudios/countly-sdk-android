@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId "ly.count.android.demo"
-        minSdkVersion 12
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
