@@ -45,6 +45,10 @@ import java.util.TimeZone;
  * event data.
  */
 class DeviceInfo {
+
+    private static String appVersion = null;
+    private static String storeInstall = null;
+
     /**
      * Returns the display name of the current operating system.
      */
@@ -66,7 +70,7 @@ class DeviceInfo {
      */
     @SuppressWarnings("SameReturnValue")
     static String getDevice() {
-        return android.os.Build.MODEL;
+        return "UNTRACKED";
     }
 
     static String deepLink;
@@ -78,23 +82,7 @@ class DeviceInfo {
      * @return a string in the format "WxH", or the empty string "" if resolution cannot be determined
      */
     static String getResolution(final Context context) {
-        // user reported NPE in this method; that means either getSystemService or getDefaultDisplay
-        // were returning null, even though the documentation doesn't say they should do so; so now
-        // we catch Throwable and return empty string if that happens
-        String resolution = "";
-        try {
-            final WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            final Display display = wm.getDefaultDisplay();
-            final DisplayMetrics metrics = new DisplayMetrics();
-            display.getMetrics(metrics);
-            resolution = metrics.widthPixels + "x" + metrics.heightPixels;
-        }
-        catch (Throwable t) {
-            if (Countly.sharedInstance().isLoggingEnabled()) {
-                Log.i(Countly.TAG, "Device resolution cannot be determined");
-            }
-        }
-        return resolution;
+        return "UNTRACKED";
     }
 
     /**
@@ -104,59 +92,7 @@ class DeviceInfo {
      *         empty string if the density is unknown
      */
     static String getDensity(final Context context) {
-        String densityStr;
-        final int density = context.getResources().getDisplayMetrics().densityDpi;
-        switch (density) {
-            case DisplayMetrics.DENSITY_LOW:
-                densityStr = "LDPI";
-                break;
-            case DisplayMetrics.DENSITY_MEDIUM:
-                densityStr = "MDPI";
-                break;
-            case DisplayMetrics.DENSITY_TV:
-                densityStr = "TVDPI";
-                break;
-            case DisplayMetrics.DENSITY_HIGH:
-                densityStr = "HDPI";
-                break;
-            case DisplayMetrics.DENSITY_260:
-                densityStr = "XHDPI";
-                break;
-            case DisplayMetrics.DENSITY_280:
-                densityStr = "XHDPI";
-                break;
-            case DisplayMetrics.DENSITY_300:
-                densityStr = "XHDPI";
-                break;
-            case DisplayMetrics.DENSITY_XHIGH:
-                densityStr = "XHDPI";
-                break;
-            case DisplayMetrics.DENSITY_340:
-                densityStr = "XXHDPI";
-                break;
-            case DisplayMetrics.DENSITY_360:
-                densityStr = "XXHDPI";
-                break;
-            case DisplayMetrics.DENSITY_400:
-                densityStr = "XXHDPI";
-                break;
-            case DisplayMetrics.DENSITY_420:
-                densityStr = "XXHDPI";
-                break;
-            case DisplayMetrics.DENSITY_XXHIGH:
-                densityStr = "XXHDPI";
-                break;
-            case DisplayMetrics.DENSITY_560:
-                densityStr = "XXXHDPI";
-                break;
-            case DisplayMetrics.DENSITY_XXXHIGH:
-                densityStr = "XXXHDPI";
-                break;
-            default:
-                densityStr = "other";
-                break;
-        }
-        return densityStr;
+        return "UNTRACKED";
     }
 
     /**
@@ -167,18 +103,7 @@ class DeviceInfo {
      *         string if it cannot be accessed or determined
      */
     static String getCarrier(final Context context) {
-        String carrier = "";
-        final TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        if (manager != null) {
-            carrier = manager.getNetworkOperatorName();
-        }
-        if (carrier == null || carrier.length() == 0) {
-            carrier = "";
-            if (Countly.sharedInstance().isLoggingEnabled()) {
-                Log.i(Countly.TAG, "No carrier found");
-            }
-        }
-        return carrier;
+        return "UNTRACKED";
     }
 
     static int getTimezoneOffset() {
@@ -189,8 +114,7 @@ class DeviceInfo {
      * Returns the current locale (ex. "en_US").
      */
     static String getLocale() {
-        final Locale locale = Locale.getDefault();
-        return locale.getLanguage() + "_" + locale.getCountry();
+        return "UNTRACKED";
     }
 
     /**
@@ -199,37 +123,40 @@ class DeviceInfo {
      * is not present.
      */
     static String getAppVersion(final Context context) {
-        String result = Countly.DEFAULT_APP_VERSION;
+        if (appVersion != null) return appVersion;
+
+        appVersion = Countly.DEFAULT_APP_VERSION;
         try {
-            result = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+            appVersion = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
         }
         catch (PackageManager.NameNotFoundException e) {
             if (Countly.sharedInstance().isLoggingEnabled()) {
                 Log.i(Countly.TAG, "No app version found");
             }
         }
-        return result;
+        return appVersion;
     }
 
     /**
      * Returns the package name of the app that installed this app
      */
     static String getStore(final Context context) {
-        String result = "";
+        if (storeInstall != null) return storeInstall;
+        storeInstall = "";
         try {
-            result = context.getPackageManager().getInstallerPackageName(context.getPackageName());
+            storeInstall = context.getPackageManager().getInstallerPackageName(context.getPackageName());
         } catch (Exception e) {
             if (Countly.sharedInstance().isLoggingEnabled()) {
                 Log.i(Countly.TAG, "Can't get Installer package [getStore]");
             }
         }
-        if (result == null || result.length() == 0) {
-            result = "";
+        if (storeInstall == null || storeInstall.length() == 0) {
+            storeInstall = "";
             if (Countly.sharedInstance().isLoggingEnabled()) {
                 Log.i(Countly.TAG, "No store found [getStore]");
             }
         }
-        return result;
+        return storeInstall;
     }
 
     /**
@@ -251,7 +178,7 @@ class DeviceInfo {
                 "_locale", getLocale(),
                 "_app_version", getAppVersion(context),
                 "_store", getStore(context),
-                "_deep_link", deepLink);
+                "_deep_link", "UNTRACKED");
 
         String result = json.toString();
 
