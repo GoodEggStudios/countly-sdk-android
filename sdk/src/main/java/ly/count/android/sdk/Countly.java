@@ -92,6 +92,43 @@ public class Countly {
 
     protected static final Map<String, Event> timedEvents = new HashMap<>();
 
+    private final Application.ActivityLifecycleCallbacks lifecycleCallbacks = new Application.ActivityLifecycleCallbacks() {
+        @Override
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+
+        }
+
+        @Override
+        public void onActivityStarted(Activity activity) {
+            Countly.sharedInstance().onStart(activity);
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityStopped(Activity activity) {
+            Countly.sharedInstance().onStop();
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+
+        }
+
+        @Override
+        public void onActivityDestroyed(Activity activity) {
+
+        }
+    };
+
     /**
      * Enum used in Countly.initMessaging() method which controls what kind of
      * app installation it is. Later (in Countly Dashboard or when calling Countly API method),
@@ -119,9 +156,6 @@ public class Countly {
     private boolean enableLogging_;
     private Countly.CountlyMessagingMode messagingMode_;
     private Context context_;
-
-    //user data access
-    public static UserData userData;
 
     //track views
     private String lastView = null;
@@ -216,7 +250,6 @@ public class Countly {
      */
     Countly() {
         connectionQueue_ = new ConnectionQueue();
-        Countly.userData = new UserData(connectionQueue_);
         timerService_ = Executors.newSingleThreadScheduledExecutor();
         timerService_.scheduleWithFixedDelay(new Runnable() {
             @Override
@@ -444,46 +477,16 @@ public class Countly {
             }
         }
 
+        registerSessionMetrics();
         return this;
     }
 
-    public static void start(Application app) {
-        app.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-            @Override
-            public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+    private void registerSessionMetrics() {
+        ((Application) context_).registerActivityLifecycleCallbacks(lifecycleCallbacks);
+    }
 
-            }
-
-            @Override
-            public void onActivityStarted(Activity activity) {
-                Countly.sharedInstance().onStart(activity);
-            }
-
-            @Override
-            public void onActivityResumed(Activity activity) {
-
-            }
-
-            @Override
-            public void onActivityPaused(Activity activity) {
-
-            }
-
-            @Override
-            public void onActivityStopped(Activity activity) {
-                Countly.sharedInstance().onStop();
-            }
-
-            @Override
-            public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
-            }
-
-            @Override
-            public void onActivityDestroyed(Activity activity) {
-
-            }
-        });
+    private void unregisterSessionMetrics() {
+        ((Application) context_).unregisterActivityLifecycleCallbacks(lifecycleCallbacks);
     }
 
     /**
@@ -609,6 +612,7 @@ public class Countly {
         if (Countly.sharedInstance().isLoggingEnabled()) {
             Log.i(Countly.TAG, "Halting Countly!");
         }
+        unregisterSessionMetrics();
         eventQueue_ = null;
         final CountlyStore countlyStore = connectionQueue_.getCountlyStore();
         if (countlyStore != null) {
