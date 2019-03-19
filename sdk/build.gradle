@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-apply plugin: 'bintray-release'
 
 buildscript {
     repositories {
@@ -60,14 +59,4 @@ dependencies {
     androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito:2.2.0'
 
     androidTestImplementation 'com.squareup.okhttp3:mockwebserver:3.7.0'
-}
-
-publish {
-    userOrg = 'countly'
-    groupId = 'ly.count.android'
-    artifactId = 'sdk'
-    publishVersion = '19.02.1'
-    desc = 'Android SDK for Countly mobile analytics'
-    website = 'https://github.com/Countly/countly-sdk-android'
-    autoPublish = false
 }
