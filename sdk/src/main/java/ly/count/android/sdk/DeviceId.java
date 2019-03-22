@@ -14,8 +14,6 @@ public class DeviceId {
      */
     public enum Type {
         DEVELOPER_SUPPLIED,
-        OPEN_UDID,
-        ADVERTISING_ID,
     }
 
     private static final String TAG = "DeviceId";
@@ -85,46 +83,6 @@ public class DeviceId {
             }
             type = overriddenType;
         }
-
-        switch (type) {
-            case DEVELOPER_SUPPLIED:
-                // no initialization for developer id
-                break;
-            case OPEN_UDID:
-                if (OpenUDIDAdapter.isOpenUDIDAvailable()) {
-                    if (Countly.sharedInstance().isLoggingEnabled()) {
-                        Log.i(TAG, "Using OpenUDID");
-                    }
-                    if (!OpenUDIDAdapter.isInitialized()) {
-                        OpenUDIDAdapter.sync(context);
-                    }
-                } else {
-                    if (raiseExceptions) throw new IllegalStateException("OpenUDID is not available, please make sure that you have it in your classpath");
-                }
-                break;
-            case ADVERTISING_ID:
-                if (AdvertisingIdAdapter.isAdvertisingIdAvailable()) {
-                    if (Countly.sharedInstance().isLoggingEnabled()) {
-                        Log.i(TAG, "Using Advertising ID");
-                    }
-                    AdvertisingIdAdapter.setAdvertisingId(context, store, this);
-                } else if (OpenUDIDAdapter.isOpenUDIDAvailable()) {
-                    // Fall back to OpenUDID on devices without google play services set up
-                    if (Countly.sharedInstance().isLoggingEnabled()) {
-                        Log.i(TAG, "Advertising ID is not available, falling back to OpenUDID");
-                    }
-                    if (!OpenUDIDAdapter.isInitialized()) {
-                        OpenUDIDAdapter.sync(context);
-                    }
-                } else {
-                    // just do nothing, without Advertising ID and OpenUDID this user is lost for Countly
-                    if (Countly.sharedInstance().isLoggingEnabled()) {
-                        Log.w(TAG, "Advertising ID is not available, neither OpenUDID is");
-                    }
-                    if (raiseExceptions) throw new IllegalStateException("OpenUDID is not available, please make sure that you have it in your classpath");
-                }
-                break;
-        }
     }
 
     private void storeOverriddenType(CountlyStore store, Type type) {
@@ -143,19 +101,12 @@ public class DeviceId {
             return null;
         } else if (typeString.equals(Type.DEVELOPER_SUPPLIED.toString())) {
             return Type.DEVELOPER_SUPPLIED;
-        } else if (typeString.equals(Type.OPEN_UDID.toString())) {
-            return Type.OPEN_UDID;
-        } else if (typeString.equals(Type.ADVERTISING_ID.toString())) {
-            return Type.ADVERTISING_ID;
         } else {
             return null;
         }
     }
 
     protected String getId() {
-        if (id == null && type == Type.OPEN_UDID) {
-            id = OpenUDIDAdapter.getOpenUDID();
-        }
         return id;
     }
 

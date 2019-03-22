@@ -264,37 +264,6 @@ public class Countly {
     /**
      * Initializes the Countly SDK. Call from your main Activity's onCreate() method.
      * Must be called before other SDK methods can be used.
-     * Device ID is supplied by OpenUDID service if available, otherwise Advertising ID is used.
-     * BE CAUTIOUS!!!! If neither OpenUDID, nor Advertising ID is available, Countly will ignore this user.
-     * @param context application context
-     * @param serverURL URL of the Countly server to submit data to; use "https://try.count.ly" for Countly trial server
-     * @param appKey app key for the application being tracked; find in the Countly Dashboard under Management &gt; Applications
-     * @return Countly instance for easy method chaining
-     * @throws java.lang.IllegalArgumentException if context, serverURL, appKey, or deviceID are invalid
-     * @throws java.lang.IllegalStateException if the Countly SDK has already been initialized
-     */
-    public Countly init(final Context context, final String serverURL, final String appKey) {
-        return init(context, serverURL, appKey, null, OpenUDIDAdapter.isOpenUDIDAvailable() ? DeviceId.Type.OPEN_UDID : DeviceId.Type.ADVERTISING_ID);
-    }
-
-    /**
-     * Initializes the Countly SDK. Call from your main Activity's onCreate() method.
-     * Must be called before other SDK methods can be used.
-     * @param context application context
-     * @param serverURL URL of the Countly server to submit data to
-     * @param appKey app key for the application being tracked; find in the Countly Dashboard under Management &gt; Applications
-     * @param deviceID unique ID for the device the app is running on; note that null in deviceID means that Countly will fall back to OpenUDID, then, if it's not available, to Google Advertising ID
-     * @return Countly instance for easy method chaining
-     * @throws IllegalArgumentException if context, serverURL, appKey, or deviceID are invalid
-     * @throws IllegalStateException if init has previously been called with different values during the same application instance
-     */
-    public Countly init(final Context context, final String serverURL, final String appKey, final String deviceID) {
-        return init(context, serverURL, appKey, deviceID, null);
-    }
-
-    /**
-     * Initializes the Countly SDK. Call from your main Activity's onCreate() method.
-     * Must be called before other SDK methods can be used.
      * @param context application context
      * @param serverURL URL of the Countly server to submit data to
      * @param appKey app key for the application being tracked; find in the Countly Dashboard under Management &gt; Applications
@@ -349,16 +318,8 @@ public class Countly {
         if (deviceID != null && deviceID.length() == 0) {
             throw new IllegalArgumentException("valid deviceID is required, but was provided either 'null' or empty String");
         }
-        if (deviceID == null && idMode == null) {
-            if (OpenUDIDAdapter.isOpenUDIDAvailable()) idMode = DeviceId.Type.OPEN_UDID;
-            else if (AdvertisingIdAdapter.isAdvertisingIdAvailable()) idMode = DeviceId.Type.ADVERTISING_ID;
-        }
-        if (deviceID == null && idMode == DeviceId.Type.OPEN_UDID && !OpenUDIDAdapter.isOpenUDIDAvailable()) {
-            throw new IllegalArgumentException("valid deviceID is required because OpenUDID is not available");
-        }
-        if (deviceID == null && idMode == DeviceId.Type.ADVERTISING_ID && !AdvertisingIdAdapter.isAdvertisingIdAvailable()) {
-            throw new IllegalArgumentException("valid deviceID is required because Advertising ID is not available (you need to include Google Play services 4.0+ into your project)");
-        }
+        if (deviceID == null && idMode == null) { }
+
         if (eventQueue_ != null && (!connectionQueue_.getServerURL().equals(serverURL) ||
                 !connectionQueue_.getAppKey().equals(appKey) ||
                 !DeviceId.deviceIDEqualsNullSafe(deviceID, idMode, connectionQueue_.getDeviceId()) )) {
@@ -420,7 +381,6 @@ public class Countly {
             if (Countly.sharedInstance().isLoggingEnabled()) {
                 Log.d(Countly.TAG, "Currently cached advertising ID [" + countlyStore.getCachedAdvertisingId() + "]");
             }
-            AdvertisingIdAdapter.cacheAdvertisingID(context, countlyStore);
 
             deviceIdInstance.init(context, countlyStore, true);
 
