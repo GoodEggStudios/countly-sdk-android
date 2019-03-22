@@ -126,6 +126,7 @@ public class Countly {
     };
 
     private boolean sessionMetricsRegistered = false;
+    private boolean initCalledAtLeastOnce = false;
 
     /**
      * Enum used in Countly.initMessaging() method which controls what kind of
@@ -474,8 +475,12 @@ public class Countly {
                 RemoteConfig.updateRemoteConfigValues(context_, null, null, connectionQueue_, false, remoteConfigInitCallback);
             }
         }
-        ((Application) context_).registerActivityLifecycleCallbacks(lifecycleCallbacks);
         registerSessionMetrics();
+
+        if (!initCalledAtLeastOnce) {
+            initCalledAtLeastOnce = true;
+            ((Application) context_).registerActivityLifecycleCallbacks(lifecycleCallbacks);
+        }
         return this;
     }
 
