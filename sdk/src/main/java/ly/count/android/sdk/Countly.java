@@ -695,9 +695,6 @@ public class Countly {
         if (eventQueue_ == null) {
             throw new IllegalStateException("init must be called before onStop");
         }
-        if (activityCount_ == 0) {
-            throw new IllegalStateException("must call onStart before onStop");
-        }
 
         if (activityCount_ == 0) {
             onStopHelper();
