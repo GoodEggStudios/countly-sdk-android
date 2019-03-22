@@ -94,40 +94,38 @@ public class Countly {
 
     private final Application.ActivityLifecycleCallbacks lifecycleCallbacks = new Application.ActivityLifecycleCallbacks() {
         @Override
-        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
-        }
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) { }
 
         @Override
         public void onActivityStarted(Activity activity) {
-            Countly.sharedInstance().onStart(activity);
+            ++activityCount_;
+            if (sessionMetricsRegistered) {
+                Countly.sharedInstance().onStart(activity);
+            }
         }
 
         @Override
-        public void onActivityResumed(Activity activity) {
-
-        }
+        public void onActivityResumed(Activity activity) { }
 
         @Override
-        public void onActivityPaused(Activity activity) {
-
-        }
+        public void onActivityPaused(Activity activity) { }
 
         @Override
         public void onActivityStopped(Activity activity) {
-            Countly.sharedInstance().onStop();
+            --activityCount_;
+            if (sessionMetricsRegistered) {
+                Countly.sharedInstance().onStop();
+            }
         }
 
         @Override
-        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
-        }
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) { }
 
         @Override
-        public void onActivityDestroyed(Activity activity) {
-
-        }
+        public void onActivityDestroyed(Activity activity) { }
     };
+
+    private boolean sessionMetricsRegistered = false;
 
     /**
      * Enum used in Countly.initMessaging() method which controls what kind of
@@ -476,17 +474,17 @@ public class Countly {
                 RemoteConfig.updateRemoteConfigValues(context_, null, null, connectionQueue_, false, remoteConfigInitCallback);
             }
         }
-
+        ((Application) context_).registerActivityLifecycleCallbacks(lifecycleCallbacks);
         registerSessionMetrics();
         return this;
     }
 
-    private void registerSessionMetrics() {
-        ((Application) context_).registerActivityLifecycleCallbacks(lifecycleCallbacks);
+    public void registerSessionMetrics() {
+        sessionMetricsRegistered = true;
     }
 
-    private void unregisterSessionMetrics() {
-        ((Application) context_).unregisterActivityLifecycleCallbacks(lifecycleCallbacks);
+    public void unregisterSessionMetrics() {
+        sessionMetricsRegistered = false;
     }
 
     /**
@@ -623,7 +621,6 @@ public class Countly {
         connectionQueue_.setAppKey(null);
         connectionQueue_.setCountlyStore(null);
         prevSessionDurationStartTime_ = 0;
-        activityCount_ = 0;
     }
 
     /**
@@ -643,7 +640,6 @@ public class Countly {
             throw new IllegalStateException("init must be called before onStart");
         }
 
-        ++activityCount_;
         if (activityCount_ == 1) {
             onStartHelper();
         }
@@ -703,7 +699,6 @@ public class Countly {
             throw new IllegalStateException("must call onStart before onStop");
         }
 
-        --activityCount_;
         if (activityCount_ == 0) {
             onStopHelper();
         }
